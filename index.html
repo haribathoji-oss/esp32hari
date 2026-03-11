@@ -7,28 +7,33 @@
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background-color: #f0f2f5; margin: 0; padding-bottom: 50px; }
     h1 { margin-top: 30px; color: #1c1e21; }
+    
+    /* Login styling */
     #loginForm { max-width: 380px; margin: 80px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     #loginForm input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
     #loginForm button { width: 100%; background: #1877f2; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; }
     
+    /* Dashboard hidden by default */
     #dashboard { display: none; }
+    
     .relay-container { display: flex; flex-wrap: wrap; justify-content: center; max-width: 1000px; margin: 20px auto; }
     .relay-card { background: white; padding: 25px; margin: 15px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); width: 200px; transition: transform 0.2s; }
-    .relay-card:hover { transform: translateY(-5px); }
     .relay-card h2 { font-size: 1.2rem; margin-bottom: 15px; color: #333; }
     .relay-card button { width: 100%; padding: 12px; border-radius: 8px; border: none; color: white; background: #2196F3; cursor: pointer; font-weight: bold; }
     
+    /* Motion Card styling */
     #motionCard { border-top: 5px solid #607d8b; }
     .motion-active { background: #fff9c4 !important; border-top: 5px solid #ffeb3b !important; }
     #ledIndicator { width: 25px; height: 25px; border-radius: 50%; background: #ccc; margin: 10px auto; border: 2px solid #999; }
     
+    /* Control Buttons */
     #allOffBtn { background: #e91e63; color: white; padding: 15px 50px; border: none; border-radius: 30px; cursor: pointer; margin-top: 30px; font-weight: bold; }
     #logoutBtn { background: #607d8b; color: white; padding: 10px 30px; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; }
   </style>
 </head>
 <body>
 
-  <h1>Hari's Home Dashboard</h1>
+  <h1>Hari's Home</h1>
 
   <div id="loginForm">
     <input type="email" id="email" placeholder="Email" />
@@ -44,13 +49,13 @@
       <div class="relay-card"><h2>Fridge</h2><p>Status: <span id="status4">...</span></p><button id="btn4">Toggle</button></div>
       
       <div class="relay-card" id="motionCard">
-        <h2>Motion Sensor</h2>
+        <h2>Motion LED</h2>
         <div id="ledIndicator"></div>
-        <p><span id="statusMotion" style="font-weight:bold;">Scanning...</span></p>
+        <p><span id="statusMotion" style="font-weight:bold;">Clear</span></p>
       </div>
     </div>
 
-    <button id="allOffBtn">Switch Everything OFF</button><br>
+    <button id="allOffBtn">All OFF</button><br>
     <button id="logoutBtn">Logout</button>
   </div>
 
@@ -73,15 +78,15 @@
       firebase.auth().signInWithEmailAndPassword(email, pass).then(() => {
         document.getElementById("loginForm").style.display = "none";
         document.getElementById("dashboard").style.display = "block";
-        startRealtimeSync();
-      }).catch(err => alert("Login Error: " + err.message));
+        startSync();
+      }).catch(err => alert(err.message));
     };
 
-    function startRealtimeSync() {
+    function startSync() {
       const db = firebase.database();
-      
-      // Sync Relays
-      [1, 2, 3, 4].forEach(i => {
+      const relayIds = [1, 2, 3, 4];
+
+      relayIds.forEach(i => {
         db.ref("relay" + i).on("value", snap => {
           const val = snap.val();
           document.getElementById("status" + i).innerText = val ? "ON" : "OFF";
@@ -93,26 +98,18 @@
         };
       });
 
-      // Sync Motion Sensor (Independent)
+      // Independent Motion Listener
       db.ref("motionStatus").on("value", snap => {
         const active = snap.val();
-        const card = document.getElementById("motionCard");
-        const indicator = document.getElementById("ledIndicator");
-        const label = document.getElementById("statusMotion");
-
-        label.innerText = active ? "MOTION DETECTED" : "Area Clear";
-        label.style.color = active ? "#d32f2f" : "#455a64";
-        indicator.style.background = active ? "#f44336" : "#ccc";
-        indicator.style.boxShadow = active ? "0 0 10px #f44336" : "none";
-        active ? card.classList.add("motion-active") : card.classList.remove("motion-active");
+        document.getElementById("statusMotion").innerText = active ? "DETECTED" : "Clear";
+        document.getElementById("statusMotion").style.color = active ? "red" : "black";
+        document.getElementById("ledIndicator").style.background = active ? "red" : "#ccc";
+        active ? document.getElementById("motionCard").classList.add("motion-active") : document.getElementById("motionCard").classList.remove("motion-active");
       });
 
-      document.getElementById("allOffBtn").onclick = () => {
-        [1, 2, 3, 4].forEach(i => db.ref("relay" + i).set(false));
-      };
-
+      document.getElementById("allOffBtn").onclick = () => relayIds.forEach(i => db.ref("relay" + i).set(false));
       document.getElementById("logoutBtn").onclick = () => {
-        firebase.auth().signOut().then(() => location.reload());
+          firebase.auth().signOut().then(() => location.reload());
       };
     }
   </script>
