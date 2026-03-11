@@ -2,158 +2,57 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Hari Home</title>
+  <title>Hari's Home Control</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #f9f9f9;
-      margin: 0;
-      padding: 0 10px 40px;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      justify-content: space-between;
-    }
-    h1 {
-      margin-top: 30px;
-      font-size: 1.8rem;
-    }
-    /* PIR Status Styling */
-    #motionContainer {
-      background-color: #eee;
-      padding: 10px;
-      border-radius: 10px;
-      max-width: 400px;
-      margin: 10px auto;
-      font-weight: bold;
-      transition: all 0.3s ease;
-    }
-    .motion-detected {
-      background-color: #ffcc00 !important;
-      color: #000;
-      box-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
-    }
-
-    .relay-card {
-      display: inline-block;
-      background-color: white;
-      padding: 20px;
-      margin: 15px;
-      border-radius: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      width: 220px;
-      vertical-align: top;
-    }
-    .relay-card h2 { margin-bottom: 10px; font-size: 1.3rem; }
-    .relay-card button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 10px;
-      color: white;
-      background-color: blue;
-      cursor: pointer;
-      font-size: 16px;
-      width: 90%;
-    }
-    #allOffBtn, #logoutBtn {
-      max-width: 300px;
-      width: 90%;
-      padding: 12px 25px;
-      font-size: 16px;
-      border: none;
-      border-radius: 10px;
-      margin: 15px auto;
-      display: block;
-      color: white;
-    }
-    #allOffBtn { background-color: #d32f2f; }
-    #logoutBtn { background-color: #555; }
-
+    body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background-color: #f0f2f5; margin: 0; padding-bottom: 50px; }
+    h1 { margin-top: 30px; color: #1c1e21; }
+    #loginForm { max-width: 380px; margin: 80px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    #loginForm input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
+    #loginForm button { width: 100%; background: #1877f2; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; }
+    
     #dashboard { display: none; }
-    #loginForm {
-      max-width: 400px;
-      margin: 80px auto 20px;
-      background: white;
-      padding: 30px 20px;
-      border-radius: 15px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    #loginForm input {
-      width: 100%;
-      padding: 12px 15px;
-      margin: 10px 0 20px;
-      border-radius: 10px;
-      box-sizing: border-box;
-    }
-    #loginForm button {
-      width: 100%;
-      background-color: #1e88e5;
-      color: white;
-      padding: 12px;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-    .relay-container {
-      max-width: 960px;
-      margin: 20px auto 0;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    @media (max-width: 700px) {
-      .relay-card { width: 90%; display: block; }
-    }
-    footer { font-size: 0.9rem; color: #666; margin-top: 40px; }
+    .relay-container { display: flex; flex-wrap: wrap; justify-content: center; max-width: 1000px; margin: 20px auto; }
+    .relay-card { background: white; padding: 25px; margin: 15px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); width: 200px; transition: transform 0.2s; }
+    .relay-card:hover { transform: translateY(-5px); }
+    .relay-card h2 { font-size: 1.2rem; margin-bottom: 15px; color: #333; }
+    .relay-card button { width: 100%; padding: 12px; border-radius: 8px; border: none; color: white; background: #2196F3; cursor: pointer; font-weight: bold; }
+    
+    #motionCard { border-top: 5px solid #607d8b; }
+    .motion-active { background: #fff9c4 !important; border-top: 5px solid #ffeb3b !important; }
+    #ledIndicator { width: 25px; height: 25px; border-radius: 50%; background: #ccc; margin: 10px auto; border: 2px solid #999; }
+    
+    #allOffBtn { background: #e91e63; color: white; padding: 15px 50px; border: none; border-radius: 30px; cursor: pointer; margin-top: 30px; font-weight: bold; }
+    #logoutBtn { background: #607d8b; color: white; padding: 10px 30px; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; }
   </style>
 </head>
 <body>
 
-  <h1>Hari's Home</h1>
+  <h1>Hari's Home Dashboard</h1>
 
   <div id="loginForm">
-    <input type="email" id="email" placeholder="Enter Email" required />
-    <input type="password" id="password" placeholder="Enter Password" required />
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
     <button id="loginBtn">Login</button>
   </div>
 
-<div id="dashboard">
-    <div id="motionContainer">
-      Motion Sensor: <span id="pirStatus">Scanning...</span>
-    </div>
-
+  <div id="dashboard">
     <div class="relay-container">
-      <div class="relay-card">
-        <h2>Light </h2> <p>Status: <span id="status1">Loading...</span></p>
-        <button id="btn1">Toggle</button>
-      </div>
-
-      <div class="relay-card">
-        <h2>Fan</h2> <p>Status: <span id="status2">Loading...</span></p>
-        <button id="btn2">Toggle</button>
-      </div>
-
-      <div class="relay-card">
-        <h2>AC</h2> <p>Status: <span id="status3">Loading...</span></p>
-        <button id="btn4">Toggle</button> </div>
-
-      <div class="relay-card">
-        <h2>Fridge</h2> <p>Status: <span id="status4">Loading...</span></p>
-        <button id="btn4">Toggle</button>
+      <div class="relay-card"><h2>Light</h2><p>Status: <span id="status1">...</span></p><button id="btn1">Toggle</button></div>
+      <div class="relay-card"><h2>Fan</h2><p>Status: <span id="status2">...</span></p><button id="btn2">Toggle</button></div>
+      <div class="relay-card"><h2>AC</h2><p>Status: <span id="status3">...</span></p><button id="btn3">Toggle</button></div>
+      <div class="relay-card"><h2>Fridge</h2><p>Status: <span id="status4">...</span></p><button id="btn4">Toggle</button></div>
+      
+      <div class="relay-card" id="motionCard">
+        <h2>Motion Sensor</h2>
+        <div id="ledIndicator"></div>
+        <p><span id="statusMotion" style="font-weight:bold;">Scanning...</span></p>
       </div>
     </div>
 
-    <button id="allOffBtn">All OFF</button>
+    <button id="allOffBtn">Switch Everything OFF</button><br>
     <button id="logoutBtn">Logout</button>
   </div>
-    </div>
-
-    <button id="allOffBtn">All OFF</button>
-    <button id="logoutBtn">Logout</button>
-  </div>
-
-  <footer>Created by Hari</footer>
 
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
@@ -164,90 +63,58 @@
       apiKey: "AIzaSyB-22CLI_hDwY6--Kg52edkIIHnuZ-1mnk",
       authDomain: "esp32-audio-1e81c.firebaseapp.com",
       databaseURL: "https://esp32-audio-1e81c-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "esp32-audio-1e81c",
-      storageBucket: "esp32-audio-1e81c.firebasestorage.app",
-      messagingSenderId: "149318303462",
-      appId: "1:149318303462:web:185371d532fe8691d0c527",
-      measurementId: "G-5G9D9PV5VT"
+      projectId: "esp32-audio-1e81c"
     };
-
     firebase.initializeApp(firebaseConfig);
 
-    const allowedEmail = "haribathoji@gmail.com";
-    const allowedPassword = "Harimohan$12";
+    document.getElementById("loginBtn").onclick = () => {
+      const email = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
+      firebase.auth().signInWithEmailAndPassword(email, pass).then(() => {
+        document.getElementById("loginForm").style.display = "none";
+        document.getElementById("dashboard").style.display = "block";
+        startRealtimeSync();
+      }).catch(err => alert("Login Error: " + err.message));
+    };
 
-    const loginForm = document.getElementById("loginForm");
-    const dashboard = document.getElementById("dashboard");
-    const loginBtn = document.getElementById("loginBtn");
-
-    loginBtn.addEventListener("click", () => {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-      if(email === allowedEmail && password === allowedPassword){
-        firebase.auth().signInWithEmailAndPassword(email, password)
-          .then(() => {
-            loginForm.style.display = "none";
-            dashboard.style.display = "block";
-            startRelayControl();
-          })
-          .catch(error => alert(error.message));
-      } else {
-        alert("Invalid email or password.");
-      }
-    });
-
-    function startRelayControl() {
+    function startRealtimeSync() {
       const db = firebase.database();
-      const relays = [
-        { id: 1, path: "relay1" },
-        { id: 2, path: "relay2" },
-        { id: 3, path: "relay3" },
-        { id: 4, path: "relay4" },
-      ];
-
-      relays.forEach(relay => {
-        const statusText = document.getElementById(`status${relay.id}`);
-        const toggleButton = document.getElementById(`btn${relay.id}`);
-        const relayRef = db.ref("/" + relay.path);
-
-        relayRef.on("value", (snapshot) => {
-          const state = snapshot.val();
-          statusText.innerText = state ? "ON" : "OFF";
-          toggleButton.style.backgroundColor = state ? "green" : "blue";
-          
-          // Logic for Relay 1 (PIR Triggered)
-          if(relay.id === 1) {
-            const motionBar = document.getElementById("motionContainer");
-            const pirLabel = document.getElementById("pirStatus");
-            if(state) {
-              motionBar.classList.add("motion-detected");
-              pirLabel.innerText = "MOTION DETECTED!";
-            } else {
-              motionBar.classList.remove("motion-detected");
-              pirLabel.innerText = "Clear";
-            }
-          }
+      
+      // Sync Relays
+      [1, 2, 3, 4].forEach(i => {
+        db.ref("relay" + i).on("value", snap => {
+          const val = snap.val();
+          document.getElementById("status" + i).innerText = val ? "ON" : "OFF";
+          document.getElementById("status" + i).style.color = val ? "green" : "red";
+          document.getElementById("btn" + i).style.background = val ? "#4CAF50" : "#2196F3";
         });
-
-        toggleButton.onclick = () => {
-          relayRef.once("value").then(snap => {
-            relayRef.set(!snap.val());
-          });
+        document.getElementById("btn" + i).onclick = () => {
+          db.ref("relay" + i).transaction(curr => !curr);
         };
       });
 
+      // Sync Motion Sensor (Independent)
+      db.ref("motionStatus").on("value", snap => {
+        const active = snap.val();
+        const card = document.getElementById("motionCard");
+        const indicator = document.getElementById("ledIndicator");
+        const label = document.getElementById("statusMotion");
+
+        label.innerText = active ? "MOTION DETECTED" : "Area Clear";
+        label.style.color = active ? "#d32f2f" : "#455a64";
+        indicator.style.background = active ? "#f44336" : "#ccc";
+        indicator.style.boxShadow = active ? "0 0 10px #f44336" : "none";
+        active ? card.classList.add("motion-active") : card.classList.remove("motion-active");
+      });
+
       document.getElementById("allOffBtn").onclick = () => {
-        relays.forEach(relay => db.ref("/" + relay.path).set(false));
+        [1, 2, 3, 4].forEach(i => db.ref("relay" + i).set(false));
+      };
+
+      document.getElementById("logoutBtn").onclick = () => {
+        firebase.auth().signOut().then(() => location.reload());
       };
     }
-
-    document.getElementById("logoutBtn").onclick = () => {
-      firebase.auth().signOut().then(() => {
-        location.reload();
-      });
-    };
   </script>
 </body>
 </html>
-
-
