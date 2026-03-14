@@ -8,107 +8,132 @@
     <style>
         :root {
             --primary: #007bff;
-            --bg: #f4f7f6;
-            --card-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            --overlay: rgba(255, 255, 255, 0.85);
+            --card-shadow: 0 8px 32px rgba(0,0,0,0.1);
         }
 
-        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; min-height: 100vh; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            /* Default background if API fails */
+            background: #f4f7f6;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            transition: background 1s ease-in-out;
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh; 
+        }
 
-        /* Login Screen - Center responsive */
+        /* Login Screen */
         #loginOverlay { position: fixed; inset: 0; background: #fff; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .login-card { width: 100%; max-width: 400px; padding: 40px; border-radius: 20px; box-shadow: var(--card-shadow); text-align: center; }
+        .login-card { width: 100%; max-width: 400px; padding: 40px; border-radius: 20px; box-shadow: var(--card-shadow); text-align: center; background: white; }
         .login-card input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
         .login-card button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
 
-        /* Navbar */
-        .top-nav { background: #fff; padding: 15px 25px; display: none; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        /* Navbar with Blur Effect */
+        .top-nav { 
+            background: rgba(255, 255, 255, 0.7); 
+            backdrop-filter: blur(10px);
+            padding: 15px 25px; 
+            display: none; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+            position: sticky; 
+            top: 0; 
+            z-index: 100; 
+        }
+
+        /* Live Time Display */
+        .time-info { text-align: right; line-height: 1.2; }
+        #liveTime { font-weight: bold; font-size: 1.1rem; color: var(--primary); }
+        #liveDate { font-size: 0.8rem; color: #555; }
 
         /* Dashboard Container */
         #dashboard { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box; }
 
-        /* Responsive Grid System */
+        /* Responsive Grid */
         .main-grid { 
             display: grid; 
-            grid-template-columns: 1fr; /* Single column for mobile */
+            grid-template-columns: 1fr; 
             gap: 20px; 
             margin-top: 20px;
         }
+        @media (min-width: 768px) { .main-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1024px) { .main-grid { grid-template-columns: repeat(3, 1fr); } }
 
-        @media (min-width: 768px) {
-            .main-grid { grid-template-columns: repeat(2, 1fr); } /* 2 columns for tablets */
+        /* Glassmorphism Cards */
+        .card { 
+            background: var(--overlay); 
+            backdrop-filter: blur(5px);
+            border-radius: 20px; 
+            padding: 25px; 
+            box-shadow: var(--card-shadow); 
+            transition: 0.3s; 
+            border: 1px solid rgba(255,255,255,0.3);
         }
-
-        @media (min-width: 1024px) {
-            .main-grid { grid-template-columns: repeat(3, 1fr); } /* 3 columns for laptops */
-        }
-
-        /* Metric Cards */
-        .card { background: white; border-radius: 18px; padding: 20px; box-shadow: var(--card-shadow); transition: 0.3s; }
         .card:hover { transform: translateY(-5px); }
-        .card-header { color: #888; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+        .card-header { color: #555; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 10px; }
         
-        /* Temperature Gauge */
-        .gauge { width: 120px; height: 120px; border-radius: 50%; background: conic-gradient(var(--primary) 0deg, #edf2f7 0deg); display: flex; align-items: center; justify-content: center; margin: 0 auto; position: relative; }
-        .gauge::after { content: ""; position: absolute; width: 100px; height: 100px; background: white; border-radius: 50%; }
-        .gauge-text { position: relative; z-index: 10; font-size: 1.5rem; font-weight: bold; }
+        /* Gauge & Controls (Same as previous step) */
+        .gauge { width: 130px; height: 130px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; position: relative; }
+        .gauge::after { content: ""; position: absolute; width: 110px; height: 110px; background: white; border-radius: 50%; }
+        .gauge-text { position: relative; z-index: 10; font-size: 1.6rem; font-weight: 800; }
 
-        /* Appliance Buttons */
         .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .btn-device { border: none; padding: 20px 10px; border-radius: 15px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; font-weight: 600; transition: 0.2s; }
-        .btn-on { background: #e7f3ff; color: var(--primary); border: 2px solid var(--primary); }
+        .btn-device { border: none; padding: 25px 10px; border-radius: 18px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; font-weight: 600; transition: 0.2s; }
+        .btn-on { background: #e7f3ff; color: var(--primary); border: 2px solid var(--primary); box-shadow: 0 4px 10px rgba(0,123,255,0.2); }
         .btn-off { background: #f8f9fa; color: #adb5bd; border: 2px solid transparent; }
-        .btn-device i { font-size: 1.4rem; }
 
-        /* Motion Notification */
-        .motion-box { padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: bold; }
-        .detected { background: #fff5f5; color: #e53e3e; border: 1px solid #feb2b2; animation: blink 1s infinite; }
-        .clear { background: #f0fff4; color: #38a169; border: 1px solid #c6f6d5; }
+        .motion-box { padding: 15px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: bold; margin-top: 15px; }
+        .detected { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; animation: blink 1s infinite; }
+        .clear { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
 
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 
-        /* Footer Buttons */
-        .actions { margin-top: 30px; display: flex; flex-direction: column; gap: 10px; }
-        #allOff { background: #ff4d4f; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        #allOff { width: 100%; background: #ef4444; color: white; border: none; padding: 18px; border-radius: 15px; font-weight: bold; cursor: pointer; margin-top: 30px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
     </style>
 </head>
 <body>
 
     <div id="loginOverlay">
         <div class="login-card">
-            <h2 style="margin-bottom: 30px;">Hari's Home Cloud</h2>
+            <h2 style="margin-bottom: 30px;">Hari's Cloud</h2>
             <input type="email" id="email" placeholder="Email">
             <input type="password" id="password" placeholder="Password">
-            <button id="loginBtn">Sign In</button>
+            <button id="loginBtn">Unlock Dashboard</button>
         </div>
     </div>
 
     <nav class="top-nav" id="navbar">
-        <div style="font-weight: 800; font-size: 1.2rem;"><i class="fas fa-microchip"></i> IOT DASH</div>
-        <button onclick="location.reload()" style="background:none; border:none; color:#888;"><i class="fas fa-sign-out-alt"></i></button>
+        <div style="font-weight: 900; font-size: 1.3rem; letter-spacing: -1px;"><i class="fas fa-cube" style="color:var(--primary)"></i> SMART HOME</div>
+        <div class="time-info">
+            <div id="liveTime">00:00:00</div>
+            <div id="liveDate">Loading Date...</div>
+        </div>
     </nav>
 
     <div id="dashboard">
-        <h2 style="margin-bottom: 5px;">Dashboard Overview</h2>
-        <p style="color: #888; margin-top: 0; font-size: 0.9rem;">Live system status from ESP32</p>
-
         <div class="main-grid">
             <div class="card">
-                <div class="card-header">Internal Temp</div>
+                <div class="card-header">Temperature</div>
                 <div class="gauge" id="tempGauge">
                     <span class="gauge-text"><span id="tempVal">--</span>°C</span>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-header">Environment & Security</div>
-                <div style="font-size: 1.2rem; margin-bottom: 20px;">Humidity: <b id="humVal">--</b>%</div>
+                <div class="card-header">Status Panel</div>
+                <div style="font-size: 1.4rem; margin-bottom: 25px; font-weight: bold;">Humidity: <span id="humVal" style="color:var(--primary)">--</span>%</div>
                 <div id="motStatus" class="motion-box clear">
-                    <i class="fas fa-shield-alt"></i> <span id="motText">SECURE</span>
+                    <i class="fas fa-user-shield"></i> <span id="motText">SECURE</span>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-header">Quick Actions</div>
+                <div class="card-header">Appliances</div>
                 <div class="control-grid">
                     <button class="btn-device btn-off" id="btn1"><i class="fas fa-lightbulb"></i>Light</button>
                     <button class="btn-device btn-off" id="btn2"><i class="fas fa-fan"></i>Fan</button>
@@ -117,10 +142,7 @@
                 </div>
             </div>
         </div>
-
-        <div class="actions">
-            <button id="allOff"><i class="fas fa-power-off"></i> SWITCH ALL APPLIANCES OFF</button>
-        </div>
+        <button id="allOff"><i class="fas fa-power-off"></i> EMERGENCY SHUTDOWN</button>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
@@ -136,6 +158,24 @@
         };
         firebase.initializeApp(firebaseConfig);
 
+        // --- NEW: Live Time & Date ---
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('liveTime').innerText = now.toLocaleTimeString([], { hour12: true });
+            document.getElementById('liveDate').innerText = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' });
+        }
+        setInterval(updateClock, 1000);
+
+        // --- NEW: Daily Background Changer ---
+        // Uses Unsplash Source to get a daily nature/interior image
+        function updateBackground() {
+            const today = new Date().toDateString(); 
+            // We use the date string as a seed so it only changes once every 24 hours
+            document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)), url('https://source.unsplash.com/featured/1920x1080?nature,landscape&sig=${btoa(today)}')`;
+        }
+        updateBackground();
+
+        // Login Logic
         document.getElementById("loginBtn").onclick = () => {
             const email = document.getElementById("email").value;
             const pass = document.getElementById("password").value;
@@ -143,26 +183,21 @@
                 document.getElementById("loginOverlay").style.display = "none";
                 document.getElementById("navbar").style.display = "flex";
                 document.getElementById("dashboard").style.display = "block";
-                runDashboard();
+                runSync();
             }).catch(err => alert(err.message));
         };
 
-        function runDashboard() {
+        function runSync() {
             const db = firebase.database();
-
-            // Temp Gauge Logic
+            // Temp & Humidity
             db.ref("temperature").on("value", snap => {
                 const val = snap.val() || 0;
                 document.getElementById("tempVal").innerText = val.toFixed(1);
-                const percentage = (val / 50) * 360; 
-                document.getElementById("tempGauge").style.background = `conic-gradient(var(--primary) ${percentage}deg, #edf2f7 0deg)`;
+                document.getElementById("tempGauge").style.background = `conic-gradient(var(--primary) ${(val/50)*360}deg, #e5e7eb 0deg)`;
             });
+            db.ref("humidity").on("value", snap => document.getElementById("humVal").innerText = snap.val()?.toFixed(1) || "--");
 
-            db.ref("humidity").on("value", snap => {
-                document.getElementById("humVal").innerText = snap.val()?.toFixed(1) || "--";
-            });
-
-            // Appliances Sync
+            // Devices
             [1, 2, 3, 4].forEach(i => {
                 db.ref("relay" + i).on("value", snap => {
                     const status = snap.val();
@@ -172,13 +207,11 @@
                 document.getElementById("btn" + i).onclick = () => db.ref("relay" + i).transaction(c => !c);
             });
 
-            // Motion Logic
+            // Motion
             db.ref("motionStatus").on("value", snap => {
                 const active = snap.val();
-                const box = document.getElementById("motStatus");
-                const txt = document.getElementById("motText");
-                box.className = active ? "motion-box detected" : "motion-box clear";
-                txt.innerText = active ? "MOTION DETECTED!" : "AREA SECURE";
+                document.getElementById("motStatus").className = active ? "motion-box detected" : "motion-box clear";
+                document.getElementById("motText").innerText = active ? "MOTION DETECTED" : "AREA SECURE";
             });
 
             document.getElementById("allOff").onclick = () => [1,2,3,4].forEach(i => db.ref("relay"+i).set(false));
