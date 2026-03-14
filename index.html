@@ -5,95 +5,118 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hari's Smart Home Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        :root { --primary: #007bff; --glass: rgba(255, 255, 255, 0.1); }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; }
-
-        #hyperspeed-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
-
-        #loginOverlay, #dashboardContent { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        #dashboardContent { display: none; justify-content: flex-start; overflow-y: auto; }
-
-        .glass-card {
-            background: rgba(255, 255, 255, 0.07); backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 24px;
-            color: white; padding: 25px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
-            text-align: center;
+        :root { --primary: #007bff; --overlay: rgba(255, 255, 255, 0.9); }
+        body { 
+            font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh;
+            background: #1a202c no-repeat center center fixed; background-size: cover;
+            display: flex; flex-direction: column; transition: background 1s ease;
         }
 
-        .login-card { width: 90%; max-width: 380px; }
-        .login-card input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: none; background: rgba(255,255,255,0.1); color: white; box-sizing: border-box; }
-        .login-card button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        /* --- Login Screen Styling --- */
+        #loginOverlay { 
+            position: fixed; inset: 0; background: #f0f2f5; z-index: 2000; 
+            display: flex; align-items: center; justify-content: center; padding: 20px; 
+        }
+        .login-card { 
+            width: 100%; max-width: 400px; padding: 40px; border-radius: 24px; 
+            background: white; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; 
+        }
+        .login-card input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
+        .login-card button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 10px; }
 
-        .top-nav { width: 100%; padding: 20px 40px; display: flex; justify-content: space-between; box-sizing: border-box; background: rgba(0,0,0,0.4); }
+        /* --- Dashboard Layout --- */
+        #dashboardContent { display: none; flex-direction: column; width: 100%; }
+
+        .top-nav { 
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px);
+            padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100;
+        }
+        .time-group { text-align: right; }
+        #liveTime { font-weight: 800; font-size: 1.3rem; color: var(--primary); margin: 0; }
+        #liveDate { font-size: 0.85rem; color: #666; margin: 0; }
         
-        .main-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 25px; width: 100%; max-width: 1200px; box-sizing: border-box; }
-
+        .main-grid { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+            gap: 25px; padding: 25px; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box;
+        }
+        .card { background: var(--overlay); border-radius: 28px; padding: 30px; box-shadow: 0 12px 40px rgba(0,0,0,0.2); text-align: center; border: 1px solid rgba(255,255,255,0.4); }
+        
+        /* Temperature Gauge */
         .gauge { 
-            width: 130px; height: 130px; border-radius: 50%; margin: 15px auto; display: flex; align-items: center; justify-content: center;
-            background: conic-gradient(var(--primary) 0deg, rgba(255,255,255,0.1) 0deg); position: relative;
+            width: 140px; height: 140px; border-radius: 50%; margin: 20px auto;
+            display: flex; align-items: center; justify-content: center;
+            background: conic-gradient(var(--primary) 0deg, #e2e8f0 0deg); position: relative;
+            transition: background 0.5s ease;
         }
-        .gauge::after { content: ""; position: absolute; width: 110px; height: 110px; background: #0a0a0a; border-radius: 50%; }
-        .gauge-text { position: relative; z-index: 10; font-size: 1.7rem; font-weight: bold; }
+        .gauge::after { content: ""; position: absolute; width: 115px; height: 115px; background: white; border-radius: 50%; }
+        .gauge-text { position: relative; z-index: 10; font-size: 1.8rem; font-weight: 900; }
 
-        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
-        .btn-device { 
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            color: #ccc; padding: 20px; border-radius: 18px; cursor: pointer; transition: 0.4s; font-weight: bold;
-        }
-        .btn-on { background: var(--primary); color: white; box-shadow: 0 0 25px var(--primary); border-color: white; }
-
-        #allOff { background: #ff4d4f; border: none; color: white; padding: 18px; border-radius: 15px; width: 90%; max-width: 400px; cursor: pointer; font-weight: bold; margin: 20px auto; }
+        /* Buttons & Controls */
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .btn-device { border: none; padding: 25px 10px; border-radius: 20px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; font-weight: 700; transition: 0.3s; }
+        .btn-on { background: #e7f3ff; color: var(--primary); border: 2px solid var(--primary); transform: scale(0.98); }
+        .btn-off { background: #f8fafc; color: #cbd5e0; border: 2px solid transparent; }
+        
+        #motStatus { padding: 15px; border-radius: 15px; font-weight: 800; margin-top: 20px; transition: 0.3s; }
+        
+        .footer-btns { display: flex; flex-direction: column; gap: 10px; padding: 20px; align-items: center; }
+        #allOff { background: #ff4d4f; color: white; border: none; padding: 18px; border-radius: 15px; font-weight: bold; width: 100%; max-width: 400px; cursor: pointer; }
+        #logoutBtn { background: #4a5568; color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; max-width: 200px; cursor: pointer; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
-    <canvas id="hyperspeed-canvas"></canvas>
-
     <div id="loginOverlay">
-        <div class="glass-card login-card">
-            <h1 style="margin:0;">Hari's Home</h1>
-            <p style="opacity: 0.5; margin-bottom: 25px;">Enter System Credentials</p>
-            <input type="email" id="email" placeholder="haribathoji@gmail.com">
+        <div class="login-card">
+            <h1 style="margin-bottom: 5px;">Hari's Home</h1>
+            <p style="color:#666; margin-bottom: 30px;">Authorized Access Only</p>
+            <input type="email" id="email" placeholder="Email (haribathoji@gmail.com)">
             <input type="password" id="password" placeholder="Password">
-            <button id="loginBtn">LOG IN</button>
-            <p id="loginError" style="color:#ff4d4f; font-size:0.8rem; display:none; margin-top:10px;"></p>
+            <button id="loginBtn">Login</button>
+            <p id="loginError" style="color:#e53e3e; font-size:0.85rem; margin-top:15px; display:none;"></p>
         </div>
     </div>
 
     <div id="dashboardContent">
         <nav class="top-nav">
-            <div><h2 style="margin:0; color:white;">IOT DASH</h2><small style="color:var(--primary)">HARI'S SMART HOME</small></div>
-            <div style="text-align:right; color:white;">
-                <p id="liveTime" style="margin:0; font-weight:bold;"></p>
-                <p id="liveDate" style="margin:0; font-size:0.8rem; opacity:0.6;"></p>
+            <div><h2 style="margin:0; letter-spacing:-1px;"><i class="fas fa-home"></i> IOT DASH</h2><small>Hari's Smart Home</small></div>
+            <div class="time-group">
+                <p id="liveTime">00:00:00</p>
+                <p id="liveDate">Loading...</p>
             </div>
         </nav>
 
         <div class="main-grid">
-            <div class="glass-card">
-                <small style="letter-spacing:1px; opacity:0.7;">TEMP</small>
-                <div class="gauge" id="tempGauge"><span class="gauge-text"><span id="tempVal">--</span>°C</span></div>
+            <div class="card">
+                <small style="color:#a0aec0; font-weight:800; letter-spacing:1px;">INTERNAL TEMP</small>
+                <div class="gauge" id="tempGauge">
+                    <span class="gauge-text"><span id="tempVal">--</span>°C</span>
+                </div>
             </div>
 
-            <div class="glass-card">
-                <small style="letter-spacing:1px; opacity:0.7;">HUMIDITY</small>
-                <h2 style="margin:25px 0; font-size: 2.5rem;"><i class="fas fa-tint" style="color:var(--primary)"></i> <span id="humVal">--</span>%</h2>
-                <div id="motStatus" style="padding:12px; border-radius:12px; background:rgba(255,255,255,0.1); font-weight:bold;">SCANNING...</div>
+            <div class="card">
+                <small style="color:#a0aec0; font-weight:800; letter-spacing:1px;">ENVIRONMENT</small>
+                <h3 style="margin:25px 0; font-size: 2.2rem; color:#2d3748;"><i class="fas fa-tint" style="color:#4299e1"></i> <span id="humVal">--</span>%</h3>
+                <div id="motStatus" style="background:#edf2f7; color:#718096;">SCANNING MOTION...</div>
             </div>
 
-            <div class="glass-card">
-                <small style="letter-spacing:1px; opacity:0.7;">RELAYS</small>
+            <div class="card">
+                <small style="color:#a0aec0; font-weight:800; letter-spacing:1px;">QUICK CONTROLS</small>
                 <div class="control-grid">
-                    <button class="btn-device" id="btn1"><i class="fas fa-lightbulb"></i><br>Light</button>
-                    <button class="btn-device" id="btn2"><i class="fas fa-fan"></i><br>Fan</button>
-                    <button class="btn-device" id="btn3"><i class="fas fa-snowflake"></i><br>AC</button>
-                    <button class="btn-device" id="btn4"><i class="fas fa-plug"></i><br>Fridge</button>
+                    <button class="btn-device btn-off" id="btn1"><i class="fas fa-lightbulb"></i>Light</button>
+                    <button class="btn-device btn-off" id="btn2"><i class="fas fa-fan"></i>Fan</button>
+                    <button class="btn-device btn-off" id="btn3"><i class="fas fa-snowflake"></i>AC</button>
+                    <button class="btn-device btn-off" id="btn4"><i class="fas fa-plug"></i>Fridge</button>
                 </div>
             </div>
         </div>
-        <button id="allOff">EMERGENCY SHUTDOWN</button>
+
+        <div class="footer-btns">
+            <button id="allOff"><i class="fas fa-power-off"></i> EMERGENCY SHUTDOWN</button>
+            <button id="logoutBtn">Logout</button>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
@@ -101,33 +124,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 
     <script>
-        // --- ReactBits Logic Integration ---
-        let speed = 2; // Default speed from ReactBits
-        const canvas = document.getElementById('hyperspeed-canvas');
-        const renderer = new THREE.WebGLRenderer({canvas, antialias: true});
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 5;
-
-        const geometry = new THREE.BufferGeometry();
-        const vertices = [];
-        for (let i = 0; i < 6000; i++) {
-            vertices.push(Math.random() * 2000 - 1000, Math.random() * 2000 - 1000, Math.random() * 2000 - 1000);
-        }
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-        const material = new THREE.PointsMaterial({color: 0x007bff, size: 1.5, transparent: true, opacity: 0.8});
-        const stars = new THREE.Points(geometry, material);
-        scene.add(stars);
-
-        function animate() {
-            requestAnimationFrame(animate);
-            stars.position.z += speed; // Controlled by relay status
-            if (stars.position.z > 800) stars.position.z = 0;
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        // --- Firebase Core ---
         const firebaseConfig = {
             apiKey: "AIzaSyB-22CLI_hDwY6--Kg52edkIIHnuZ-1mnk",
             authDomain: "esp32-audio-1e81c.firebaseapp.com",
@@ -138,51 +134,82 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        document.getElementById("loginBtn").onclick = () => {
-            const email = document.getElementById("email").value;
-            const pass = document.getElementById("password").value;
-            auth.signInWithEmailAndPassword(email, pass).then(() => {
-                document.getElementById("loginOverlay").style.display = "none";
-                document.getElementById("dashboardContent").style.display = "flex";
-                startSync();
-            }).catch(err => {
-                const e = document.getElementById("loginError");
-                e.innerText = err.message; e.style.display = "block";
-            });
-        };
-
-        function startSync() {
-            let activeRelays = 0;
-
-            db.ref("temperature").on("value", snap => {
-                const val = snap.val();
-                if (val !== null) {
-                    document.getElementById("tempVal").innerText = val;
-                    document.getElementById("tempGauge").style.background = `conic-gradient(var(--primary) ${(val/50)*360}deg, rgba(255,255,255,0.1) 0deg)`;
-                }
-            });
-
-            db.ref("humidity").on("value", snap => { if(snap.val()) document.getElementById("humVal").innerText = snap.val(); });
-
-            [1,2,3,4].forEach(i => {
-                db.ref("relay"+i).on("value", snap => {
-                    const isOn = snap.val();
-                    const btn = document.getElementById("btn"+i);
-                    btn.className = isOn ? "btn-device btn-on" : "btn-device";
-                    
-                    // Logic for ReactBits Speed Effect
-                    activeRelays = (isOn) ? activeRelays + 1 : Math.max(0, activeRelays - 1);
-                    speed = (activeRelays > 0) ? 15 : 2; // Warp speed if anything is on
-                });
-                document.getElementById("btn"+i).onclick = () => db.ref("relay"+i).transaction(c => !c);
-            });
-        }
-
+        // 1. Clock & Daily Background
         setInterval(() => {
             const now = new Date();
             document.getElementById('liveTime').innerText = now.toLocaleTimeString([], { hour12: true });
-            document.getElementById('liveDate').innerText = now.toLocaleDateString();
+            document.getElementById('liveDate').innerText = now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'short'});
         }, 1000);
+
+        function updateDailyBg() {
+            const seed = new Date().toDateString();
+            document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://picsum.photos/seed/${btoa(seed)}/1920/1080')`;
+        }
+        updateDailyBg();
+
+        // 2. Login Logic
+        document.getElementById("loginBtn").onclick = () => {
+            const email = document.getElementById("email").value;
+            const pass = document.getElementById("password").value;
+            
+            auth.signInWithEmailAndPassword(email, pass)
+                .then(() => {
+                    document.getElementById("loginOverlay").style.display = "none";
+                    document.getElementById("dashboardContent").style.display = "flex";
+                    startLiveSync();
+                })
+                .catch(err => {
+                    const errBox = document.getElementById("loginError");
+                    errBox.innerText = "Login Failed: " + err.message;
+                    errBox.style.display = "block";
+                });
+        };
+
+        // 3. Live Sync Function
+        function startLiveSync() {
+            // Temperature
+            db.ref("temperature").on("value", snap => {
+                const val = snap.val();
+                if (val !== null) {
+                    document.getElementById("tempVal").innerText = parseFloat(val).toFixed(1);
+                    document.getElementById("tempGauge").style.background = `conic-gradient(var(--primary) ${(val/50)*360}deg, #e2e8f0 0deg)`;
+                }
+            });
+
+            // Humidity
+            db.ref("humidity").on("value", snap => {
+                const val = snap.val();
+                if (val !== null) document.getElementById("humVal").innerText = parseFloat(val).toFixed(1);
+            });
+
+            // Motion
+            db.ref("motionStatus").on("value", snap => {
+                const active = snap.val();
+                const box = document.getElementById("motStatus");
+                box.innerText = active ? "MOTION DETECTED!" : "AREA SECURE";
+                box.style.background = active ? "#fff5f5" : "#f0fff4";
+                box.style.color = active ? "#c53030" : "#2f855a";
+            });
+
+            // Relays (Fixes non-clicking buttons)
+            [1, 2, 3, 4].forEach(i => {
+                const relayRef = db.ref("relay" + i);
+                relayRef.on("value", snap => {
+                    const state = snap.val();
+                    document.getElementById("btn" + i).className = state ? "btn-device btn-on" : "btn-device btn-off";
+                });
+                document.getElementById("btn" + i).onclick = () => relayRef.transaction(c => !c);
+            });
+        }
+
+        // Global Actions
+        document.getElementById("allOff").onclick = () => {
+            db.ref().update({ relay1: false, relay2: false, relay3: false, relay4: false });
+        };
+
+        document.getElementById("logoutBtn").onclick = () => {
+            auth.signOut().then(() => location.reload());
+        };
     </script>
 </body>
 </html>
