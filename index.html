@@ -7,27 +7,80 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        :root { --primary: #007bff; }
-        body { font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh; background: #000; overflow-x: hidden; }
-        #hyperspeed-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-        #loginOverlay, #dashboardContent { position: relative; z-index: 10; }
+        :root { --primary: #007bff; --overlay: rgba(255, 255, 255, 0.9); }
         
-        /* Login Styling */
-        #loginOverlay { position: fixed; inset: 0; background: rgba(240, 242, 245, 0.8); backdrop-filter: blur(10px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .login-card { width: 100%; max-width: 400px; padding: 40px; border-radius: 24px; background: white; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; }
-        .login-card input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; }
-        .login-card button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        body { 
+            font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh;
+            background: #000; /* Dark base for Hyperspeed */
+            display: flex; flex-direction: column; transition: background 1s ease;
+            overflow-x: hidden;
+        }
 
-        /* Dashboard Styling */
+        /* --- ReactBits Hyperspeed Canvas --- */
+        #hyperspeed-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+        }
+
+        /* --- Content Containers (Z-index ensures they sit above stars) --- */
+        #loginOverlay, #dashboardContent { position: relative; z-index: 10; }
+
+        /* --- Login Screen Styling --- */
+        #loginOverlay { 
+            position: fixed; inset: 0; background: rgba(240, 242, 245, 0.8); 
+            backdrop-filter: blur(10px); z-index: 2000; 
+            display: flex; align-items: center; justify-content: center; padding: 20px; 
+        }
+        .login-card { 
+            width: 100%; max-width: 400px; padding: 40px; border-radius: 24px; 
+            background: white; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; 
+        }
+        .login-card input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
+        .login-card button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 10px; }
+
+        /* --- Dashboard Layout --- */
         #dashboardContent { display: none; flex-direction: column; width: 100%; }
-        .top-nav { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px); padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; color: white; }
-        .main-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; padding: 25px; max-width: 1200px; margin: 0 auto; width: 100%; }
-        .card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 28px; padding: 30px; text-align: center; border: 1px solid rgba(255,255,255,0.1); color: white; }
-        .gauge { width: 140px; height: 140px; border-radius: 50%; margin: 20px auto; display: flex; align-items: center; justify-content: center; background: conic-gradient(var(--primary) 0deg, rgba(255,255,255,0.2) 0deg); position: relative; }
+
+        .top-nav { 
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px);
+            padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3); position: sticky; top: 0; z-index: 100;
+            color: white; border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .time-group { text-align: right; }
+        #liveTime { font-weight: 800; font-size: 1.3rem; color: var(--primary); margin: 0; }
+        #liveDate { font-size: 0.85rem; color: #ddd; margin: 0; }
+        
+        .main-grid { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+            gap: 25px; padding: 25px; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box;
+        }
+        .card { 
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);
+            border-radius: 28px; padding: 30px; box-shadow: 0 12px 40px rgba(0,0,0,0.4); 
+            text-align: center; border: 1px solid rgba(255,255,255,0.1); color: white;
+        }
+        
+        /* Temperature Gauge */
+        .gauge { 
+            width: 140px; height: 140px; border-radius: 50%; margin: 20px auto;
+            display: flex; align-items: center; justify-content: center;
+            background: conic-gradient(var(--primary) 0deg, rgba(255,255,255,0.2) 0deg); position: relative;
+            transition: background 0.5s ease;
+        }
         .gauge::after { content: ""; position: absolute; width: 115px; height: 115px; background: #1a202c; border-radius: 50%; }
-        .btn-device { border: none; padding: 25px; border-radius: 20px; cursor: pointer; background: rgba(255,255,255,0.05); color: #ccc; }
-        .btn-on { background: var(--primary); color: white; box-shadow: 0 0 20px var(--primary); }
+        .gauge-text { position: relative; z-index: 10; font-size: 1.8rem; font-weight: 900; }
+
+        /* Buttons & Controls */
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .btn-device { border: none; padding: 25px 10px; border-radius: 20px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; font-weight: 700; transition: 0.3s; background: rgba(255,255,255,0.05); color: #ccc; }
+        .btn-on { background: var(--primary); color: white; transform: scale(0.98); box-shadow: 0 0 20px var(--primary); }
+        .btn-off { border: 1px solid rgba(255,255,255,0.1); }
+        
+        #motStatus { padding: 15px; border-radius: 15px; font-weight: 800; margin-top: 20px; transition: 0.3s; }
+        
         .footer-btns { display: flex; flex-direction: column; gap: 10px; padding: 20px; align-items: center; }
+        #allOff { background: #ff4d4f; color: white; border: none; padding: 18px; border-radius: 15px; font-weight: bold; width: 100%; max-width: 400px; cursor: pointer; }
+        #logoutBtn { background: #4a5568; color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; max-width: 200px; cursor: pointer; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -36,38 +89,51 @@
 
     <div id="loginOverlay">
         <div class="login-card">
-            <h1>Hari's Home</h1>
-            <input type="email" id="email" placeholder="Email">
+            <h1 style="margin-bottom: 5px;">Hari's Home</h1>
+            <p style="color:#666; margin-bottom: 30px;">Authorized Access Only</p>
+            <input type="email" id="email" placeholder="Email (haribathoji@gmail.com)">
             <input type="password" id="password" placeholder="Password">
             <button id="loginBtn">Login</button>
-            <p id="loginError" style="color:red; display:none;"></p>
+            <p id="loginError" style="color:#e53e3e; font-size:0.85rem; margin-top:15px; display:none;"></p>
         </div>
     </div>
 
     <div id="dashboardContent">
         <nav class="top-nav">
-            <div><h2><i class="fas fa-home"></i> IOT DASH</h2></div>
-            <div class="time-group"><p id="liveTime">00:00:00</p></div>
+            <div><h2 style="margin:0; letter-spacing:-1px;"><i class="fas fa-home"></i> IOT DASH</h2><small>Hari's Smart Home</small></div>
+            <div class="time-group">
+                <p id="liveTime">00:00:00</p>
+                <p id="liveDate">Loading...</p>
+            </div>
         </nav>
+
         <div class="main-grid">
             <div class="card">
-                <small>INTERNAL TEMP</small>
-                <div class="gauge" id="tempGauge"><span class="gauge-text"><span id="tempVal">--</span>°C</span></div>
+                <small style="color:#a0aec0; font-weight:800; letter-spacing:1px;">INTERNAL TEMP</small>
+                <div class="gauge" id="tempGauge">
+                    <span class="gauge-text"><span id="tempVal">--</span>°C</span>
+                </div>
             </div>
+
             <div class="card">
-                <small>ENVIRONMENT</small>
-                <h3><i class="fas fa-tint"></i> <span id="humVal">--</span>%</h3>
-                <div id="motStatus">SCANNING...</div>
+                <small style="color:#a0aec0; font-weight:800; letter-spacing:1px;">ENVIRONMENT</small>
+                <h3 style="margin:25px 0; font-size: 2.2rem; color:white;"><i class="fas fa-tint" style="color:#4299e1"></i> <span id="humVal">--</span>%</h3>
+                <div id="motStatus" style="background:rgba(255,255,255,0.1); color:#718096;">SCANNING...</div>
             </div>
+
             <div class="card">
+                <small style="color:#a0aec0; font-weight:800; letter-spacing:1px;">QUICK CONTROLS</small>
                 <div class="control-grid">
-                    <button class="btn-device" id="btn1"><i class="fas fa-lightbulb"></i>Light</button>
-                    <button class="btn-device" id="btn2"><i class="fas fa-fan"></i>Fan</button>
+                    <button class="btn-device btn-off" id="btn1"><i class="fas fa-lightbulb"></i>Light</button>
+                    <button class="btn-device btn-off" id="btn2"><i class="fas fa-fan"></i>Fan</button>
+                    <button class="btn-device btn-off" id="btn3"><i class="fas fa-snowflake"></i>AC</button>
+                    <button class="btn-device btn-off" id="btn4"><i class="fas fa-plug"></i>Fridge</button>
                 </div>
             </div>
         </div>
+
         <div class="footer-btns">
-            <button id="allOff">EMERGENCY SHUTDOWN</button>
+            <button id="allOff"><i class="fas fa-power-off"></i> EMERGENCY SHUTDOWN</button>
             <button id="logoutBtn">Logout</button>
         </div>
     </div>
@@ -77,71 +143,126 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 
     <script>
-        // --- 1. Combined 3D Engine (Stars + Ballpit) ---
+        // --- 1. ReactBits Hyperspeed Logic ---
+        let starSpeed = 2; 
         const canvas = document.getElementById('hyperspeed-canvas');
         const renderer = new THREE.WebGLRenderer({canvas, antialias: true, alpha: true});
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 10;
+        camera.position.z = 5;
 
-        // Stars
         const starGeo = new THREE.BufferGeometry();
-        const starCoords = new Float32Array(6000 * 3);
-        for (let i = 0; i < 6000 * 3; i++) starCoords[i] = Math.random() * 600 - 300;
-        starGeo.setAttribute('position', new THREE.BufferAttribute(starCoords, 3));
-        const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({color: 0x007bff, size: 0.7}));
+        const starCoords = [];
+        for (let i = 0; i < 6000; i++) {
+            starCoords.push(Math.random() * 600 - 300, Math.random() * 600 - 300, Math.random() * 600 - 300);
+        }
+        starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starCoords, 3));
+        const starMat = new THREE.PointsMaterial({color: 0x007bff, size: 0.7});
+        const stars = new THREE.Points(starGeo, starMat);
         scene.add(stars);
 
-        // Ballpit
-        const ballpit = new THREE.InstancedMesh(new THREE.SphereGeometry(0.5, 32, 32), new THREE.MeshPhongMaterial({ color: 0x007bff }), 20);
-        const matrix = new THREE.Matrix4();
-        const balls = Array.from({length: 20}, () => ({ pos: new THREE.Vector3(Math.random()*10-5, Math.random()*10-5, 0), vel: new THREE.Vector3(Math.random()*0.1-0.05, Math.random()*0.1-0.05, 0) }));
-        scene.add(ballpit);
-        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-
-        let starSpeed = 2;
-        function animate() {
-            requestAnimationFrame(animate);
+        function animateStars() {
+            requestAnimationFrame(animateStars);
             stars.rotation.y += 0.001;
             stars.position.z += starSpeed;
             if (stars.position.z > 200) stars.position.z = 0;
-
-            balls.forEach((b, i) => {
-                b.pos.add(b.vel);
-                if(Math.abs(b.pos.x) > 8) b.vel.x *= -1;
-                if(Math.abs(b.pos.y) > 8) b.vel.y *= -1;
-                matrix.setPosition(b.pos);
-                ballpit.setMatrixAt(i, matrix);
-            });
-            ballpit.instanceMatrix.needsUpdate = true;
             renderer.render(scene, camera);
         }
-        animate();
+        animateStars();
 
-        // --- 2. Firebase & UI Logic ---
-        const firebaseConfig = { apiKey: "AIzaSyB-22CLI_hDwY6--Kg52edkIIHnuZ-1mnk", authDomain: "esp32-audio-1e81c.firebaseapp.com", databaseURL: "https://esp32-audio-1e81c-default-rtdb.europe-west1.firebasedatabase.app", projectId: "esp32-audio-1e81c" };
+        // --- 2. Firebase Core ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-22CLI_hDwY6--Kg52edkIIHnuZ-1mnk",
+            authDomain: "esp32-audio-1e81c.firebaseapp.com",
+            databaseURL: "https://esp32-audio-1e81c-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "esp32-audio-1e81c"
+        };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.database();
 
+        // Clock Update
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('liveTime').innerText = now.toLocaleTimeString([], { hour12: true });
+            document.getElementById('liveDate').innerText = now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'short'});
+        }, 1000);
+
+        // Login Logic
         document.getElementById("loginBtn").onclick = () => {
-            auth.signInWithEmailAndPassword(document.getElementById("email").value, document.getElementById("password").value)
-            .then(() => {
-                document.getElementById("loginOverlay").style.display = "none";
-                document.getElementById("dashboardContent").style.display = "flex";
-                startSync();
-            });
+            const email = document.getElementById("email").value;
+            const pass = document.getElementById("password").value;
+            auth.signInWithEmailAndPassword(email, pass)
+                .then(() => {
+                    document.getElementById("loginOverlay").style.display = "none";
+                    document.getElementById("dashboardContent").style.display = "flex";
+                    startLiveSync();
+                })
+                .catch(err => {
+                    const e = document.getElementById("loginError");
+                    e.innerText = "Login Failed: " + err.message; e.style.display = "block";
+                });
         };
 
-        function startSync() {
-            db.ref("temperature").on("value", s => document.getElementById("tempVal").innerText = parseFloat(s.val()).toFixed(1));
-            [1, 2].forEach(i => {
-                db.ref("relay"+i).on("value", s => document.getElementById("btn"+i).className = s.val() ? "btn-device btn-on" : "btn-device");
-                document.getElementById("btn"+i).onclick = () => db.ref("relay"+i).transaction(c => !c);
+        // Live Sync & Speed Logic
+        function startLiveSync() {
+            let activeCount = 0;
+
+            db.ref("temperature").on("value", snap => {
+                const val = snap.val();
+                if (val !== null) {
+                    document.getElementById("tempVal").innerText = parseFloat(val).toFixed(1);
+                    document.getElementById("tempGauge").style.background = `conic-gradient(var(--primary) ${(val/50)*360}deg, rgba(255,255,255,0.2) 0deg)`;
+                }
+            });
+
+            db.ref("humidity").on("value", snap => {
+                if (snap.val() !== null) document.getElementById("humVal").innerText = parseFloat(snap.val()).toFixed(1);
+            });
+
+            db.ref("motionStatus").on("value", snap => {
+                const active = snap.val();
+                const box = document.getElementById("motStatus");
+                box.innerText = active ? "MOTION DETECTED!" : "AREA SECURE";
+                box.style.background = active ? "rgba(255, 77, 79, 0.2)" : "rgba(82, 196, 26, 0.2)";
+                box.style.color = active ? "#ff4d4f" : "#52c41a";
+            });
+
+            [1, 2, 3, 4].forEach(i => {
+                db.ref("relay" + i).on("value", snap => {
+                    const state = snap.val();
+                    const btn = document.getElementById("btn" + i);
+                    btn.className = state ? "btn-device btn-on" : "btn-device btn-off";
+                    
+                    // Warp Speed Logic: If any light/fan is on, speed up the stars
+                    updateSpeed();
+                });
+                document.getElementById("btn" + i).onclick = () => db.ref("relay" + i).transaction(c => !c);
             });
         }
-        
-        window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+
+        function updateSpeed() {
+            // Check all 4 relays. If any are true, set starSpeed to 12, otherwise 2.
+            db.ref().once('value').then(snap => {
+                const data = snap.val();
+                const anyOn = data.relay1 || data.relay2 || data.relay3 || data.relay4;
+                starSpeed = anyOn ? 12 : 2;
+            });
+        }
+
+        document.getElementById("allOff").onclick = () => {
+            db.ref().update({ relay1: false, relay2: false, relay3: false, relay4: false });
+        };
+
+        document.getElementById("logoutBtn").onclick = () => {
+            auth.signOut().then(() => location.reload());
+        };
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
         renderer.setSize(window.innerWidth, window.innerHeight);
     </script>
 </body>
