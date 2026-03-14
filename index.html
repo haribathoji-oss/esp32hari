@@ -137,7 +137,7 @@
         // 1. Clock & Daily Background
         setInterval(() => {
             const now = new Date();
-            document.getElementById('liveTime').innerText = now.toLocaleTimeString([], { hour12: true });
+            document.getElementById('liveTime').innerText = now.toLocaleTimeString([], { hour24: true });
             document.getElementById('liveDate').innerText = now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'short'});
         }, 1000);
 
