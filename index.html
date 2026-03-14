@@ -2,33 +2,31 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Hari's Home Control</title>
+  <title>Hari's Smart Home</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background-color: #f0f2f5; margin: 0; padding-bottom: 50px; }
-    h1 { margin-top: 30px; color: #1c1e21; }
-    
-    /* Login styling */
     #loginForm { max-width: 380px; margin: 80px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    #loginForm input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
-    #loginForm button { width: 100%; background: #1877f2; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; }
+    #loginForm input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+    #loginForm button { width: 100%; background: #1877f2; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
     
-    /* Dashboard hidden by default */
     #dashboard { display: none; }
     
-    .relay-container { display: flex; flex-wrap: wrap; justify-content: center; max-width: 1000px; margin: 20px auto; }
-    .relay-card { background: white; padding: 25px; margin: 15px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); width: 200px; transition: transform 0.2s; }
-    .relay-card h2 { font-size: 1.2rem; margin-bottom: 15px; color: #333; }
-    .relay-card button { width: 100%; padding: 12px; border-radius: 8px; border: none; color: white; background: #2196F3; cursor: pointer; font-weight: bold; }
+    /* Weather Styling */
+    .weather-bar { display: flex; justify-content: space-around; background: #ffffff; max-width: 600px; margin: 20px auto; padding: 15px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .weather-item { font-size: 1.1rem; font-weight: bold; color: #444; }
+    .weather-item span { color: #1877f2; }
+
+    .relay-container { display: flex; flex-wrap: wrap; justify-content: center; max-width: 1000px; margin: auto; }
+    .relay-card { background: white; padding: 25px; margin: 10px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); width: 180px; }
+    .relay-card button { width: 100%; padding: 10px; border-radius: 8px; border: none; color: white; background: #2196F3; cursor: pointer; }
     
-    /* Motion Card styling */
     #motionCard { border-top: 5px solid #607d8b; }
-    .motion-active { background: #fff9c4 !important; border-top: 5px solid #ffeb3b !important; }
-    #ledIndicator { width: 25px; height: 25px; border-radius: 50%; background: #ccc; margin: 10px auto; border: 2px solid #999; }
+    .motion-active { background: #fff9c4 !important; }
+    #ledIndicator { width: 20px; height: 20px; border-radius: 50%; background: #ccc; margin: 5px auto; }
     
-    /* Control Buttons */
-    #allOffBtn { background: #e91e63; color: white; padding: 15px 50px; border: none; border-radius: 30px; cursor: pointer; margin-top: 30px; font-weight: bold; }
-    #logoutBtn { background: #607d8b; color: white; padding: 10px 30px; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; }
+    #allOffBtn { background: #e91e63; color: white; padding: 15px 50px; border: none; border-radius: 30px; cursor: pointer; margin-top: 20px; font-weight: bold; }
+    #logoutBtn { background: #607d8b; color: white; padding: 8px 20px; border: none; border-radius: 8px; cursor: pointer; margin-top: 15px; }
   </style>
 </head>
 <body>
@@ -42,16 +40,21 @@
   </div>
 
   <div id="dashboard">
+    <div class="weather-bar">
+      <div class="weather-item">Temp: <span id="tempVal">--</span>°C</div>
+      <div class="weather-item">Humidity: <span id="humVal">--</span>%</div>
+    </div>
+
     <div class="relay-container">
-      <div class="relay-card"><h2>Light</h2><p>Status: <span id="status1">...</span></p><button id="btn1">Toggle</button></div>
-      <div class="relay-card"><h2>Fan</h2><p>Status: <span id="status2">...</span></p><button id="btn2">Toggle</button></div>
-      <div class="relay-card"><h2>AC</h2><p>Status: <span id="status3">...</span></p><button id="btn3">Toggle</button></div>
-      <div class="relay-card"><h2>Fridge</h2><p>Status: <span id="status4">...</span></p><button id="btn4">Toggle</button></div>
+      <div class="relay-card"><h2>Light</h2><p><span id="status1">...</span></p><button id="btn1">Toggle</button></div>
+      <div class="relay-card"><h2>Fan</h2><p><span id="status2">...</span></p><button id="btn2">Toggle</button></div>
+      <div class="relay-card"><h2>AC</h2><p><span id="status3">...</span></p><button id="btn3">Toggle</button></div>
+      <div class="relay-card"><h2>Fridge</h2><p><span id="status4">...</span></p><button id="btn4">Toggle</button></div>
       
       <div class="relay-card" id="motionCard">
-        <h2>Motion LED</h2>
+        <h2>Motion</h2>
         <div id="ledIndicator"></div>
-        <p><span id="statusMotion" style="font-weight:bold;">Clear</span></p>
+        <p id="statusMotion">Clear</p>
       </div>
     </div>
 
@@ -84,33 +87,32 @@
 
     function startSync() {
       const db = firebase.database();
-      const relayIds = [1, 2, 3, 4];
 
-      relayIds.forEach(i => {
+      // Sync Temperature & Humidity
+      db.ref("temperature").on("value", snap => document.getElementById("tempVal").innerText = snap.val()?.toFixed(1) || "--");
+      db.ref("humidity").on("value", snap => document.getElementById("humVal").innerText = snap.val()?.toFixed(1) || "--");
+
+      // Sync Relays
+      [1, 2, 3, 4].forEach(i => {
         db.ref("relay" + i).on("value", snap => {
           const val = snap.val();
           document.getElementById("status" + i).innerText = val ? "ON" : "OFF";
           document.getElementById("status" + i).style.color = val ? "green" : "red";
           document.getElementById("btn" + i).style.background = val ? "#4CAF50" : "#2196F3";
         });
-        document.getElementById("btn" + i).onclick = () => {
-          db.ref("relay" + i).transaction(curr => !curr);
-        };
+        document.getElementById("btn" + i).onclick = () => db.ref("relay" + i).transaction(c => !c);
       });
 
-      // Independent Motion Listener
+      // Sync Motion
       db.ref("motionStatus").on("value", snap => {
         const active = snap.val();
         document.getElementById("statusMotion").innerText = active ? "DETECTED" : "Clear";
-        document.getElementById("statusMotion").style.color = active ? "red" : "black";
         document.getElementById("ledIndicator").style.background = active ? "red" : "#ccc";
         active ? document.getElementById("motionCard").classList.add("motion-active") : document.getElementById("motionCard").classList.remove("motion-active");
       });
 
-      document.getElementById("allOffBtn").onclick = () => relayIds.forEach(i => db.ref("relay" + i).set(false));
-      document.getElementById("logoutBtn").onclick = () => {
-          firebase.auth().signOut().then(() => location.reload());
-      };
+      document.getElementById("allOffBtn").onclick = () => [1, 2, 3, 4].forEach(i => db.ref("relay" + i).set(false));
+      document.getElementById("logoutBtn").onclick = () => firebase.auth().signOut().then(() => location.reload());
     }
   </script>
 </body>
