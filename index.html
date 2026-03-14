@@ -5,16 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hari's Smart Home Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #007bff; --overlay: rgba(255, 255, 255, 0.9); }
         body { 
             font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh;
             background: #1a202c no-repeat center center fixed; background-size: cover;
-            display: flex; flex-direction: column; 
+            display: flex; flex-direction: column; transition: background 1s ease;
         }
 
-        /* --- Login Overlay --- */
+        /* --- Login Screen Styling --- */
         #loginOverlay { 
             position: fixed; inset: 0; background: #f0f2f5; z-index: 2000; 
             display: flex; align-items: center; justify-content: center; padding: 20px; 
@@ -23,10 +22,10 @@
             width: 100%; max-width: 400px; padding: 40px; border-radius: 24px; 
             background: white; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; 
         }
-        .login-card input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; }
-        .login-card button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        .login-card input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
+        .login-card button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 1.1rem; margin-top: 10px; }
 
-        /* --- Dashboard Content --- */
+        /* --- Dashboard Layout --- */
         #dashboardContent { display: none; flex-direction: column; width: 100%; }
 
         .top-nav { 
@@ -34,55 +33,56 @@
             padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100;
         }
+        .time-group { text-align: right; }
         #liveTime { font-weight: 800; font-size: 1.3rem; color: var(--primary); margin: 0; }
+        #liveDate { font-size: 0.85rem; color: #666; margin: 0; }
         
         .main-grid { 
             display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
-            gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box;
+            gap: 25px; padding: 25px; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box;
         }
-        .card { background: var(--overlay); border-radius: 24px; padding: 25px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); text-align: center; }
+        .card { background: var(--overlay); border-radius: 28px; padding: 30px; box-shadow: 0 12px 40px rgba(0,0,0,0.2); text-align: center; border: 1px solid rgba(255,255,255,0.4); }
         
         /* Temperature Gauge */
         .gauge { 
-            width: 120px; height: 120px; border-radius: 50%; margin: 15px auto;
+            width: 140px; height: 140px; border-radius: 50%; margin: 20px auto;
             display: flex; align-items: center; justify-content: center;
             background: conic-gradient(var(--primary) 0deg, #e2e8f0 0deg); position: relative;
+            transition: background 0.5s ease;
         }
-        .gauge::after { content: ""; position: absolute; width: 100px; height: 100px; background: white; border-radius: 50%; }
-        .gauge-text { position: relative; z-index: 10; font-size: 1.5rem; font-weight: 900; }
+        .gauge::after { content: ""; position: absolute; width: 115px; height: 115px; background: white; border-radius: 50%; }
+        .gauge-text { position: relative; z-index: 10; font-size: 1.8rem; font-weight: 900; }
 
-        /* Controls */
-        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
-        .btn-device { border: none; padding: 20px 5px; border-radius: 15px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; font-weight: 700; transition: 0.3s; }
-        .btn-on { background: #e7f3ff; color: var(--primary); border: 2px solid var(--primary); }
+        /* Buttons & Controls */
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .btn-device { border: none; padding: 25px 10px; border-radius: 20px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; font-weight: 700; transition: 0.3s; }
+        .btn-on { background: #e7f3ff; color: var(--primary); border: 2px solid var(--primary); transform: scale(0.98); }
         .btn-off { background: #f8fafc; color: #cbd5e0; border: 2px solid transparent; }
         
-        #motStatus { padding: 12px; border-radius: 12px; font-weight: 800; margin-top: 15px; }
+        #motStatus { padding: 15px; border-radius: 15px; font-weight: 800; margin-top: 20px; transition: 0.3s; }
         
-        /* Chart Card */
-        .chart-card { grid-column: 1 / -1; min-height: 300px; }
-
         .footer-btns { display: flex; flex-direction: column; gap: 10px; padding: 20px; align-items: center; }
         #allOff { background: #ff4d4f; color: white; border: none; padding: 18px; border-radius: 15px; font-weight: bold; width: 100%; max-width: 400px; cursor: pointer; }
-        #logoutBtn { background: #4a5568; color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; }
+        #logoutBtn { background: #4a5568; color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; max-width: 200px; cursor: pointer; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <div id="loginOverlay">
         <div class="login-card">
-            <h2>Hari's Home Cloud</h2>
-            <input type="email" id="email" placeholder="Email">
+            <h1 style="margin-bottom: 5px;">Hari's Home</h1>
+            <p style="color:#666; margin-bottom: 30px;">Authorized Access Only</p>
+            <input type="email" id="email" placeholder="Email (haribathoji@gmail.com)">
             <input type="password" id="password" placeholder="Password">
-            <button id="loginBtn">Unlock Dashboard</button>
-            <p id="loginError" style="color:red; font-size:0.8rem; margin-top:10px; display:none;"></p>
+            <button id="loginBtn">Unlock System</button>
+            <p id="loginError" style="color:#e53e3e; font-size:0.85rem; margin-top:15px; display:none;"></p>
         </div>
     </div>
 
     <div id="dashboardContent">
         <nav class="top-nav">
-            <div><h2 style="margin:0;">IOT DASH</h2><small>Hari's Smart Home</small></div>
-            <div style="text-align:right;">
+            <div><h2 style="margin:0; letter-spacing:-1px;"><i class="fas fa-home"></i> IOT DASH</h2><small>Hari's Smart Home</small></div>
+            <div class="time-group">
                 <p id="liveTime">00:00:00</p>
                 <p id="liveDate">Loading...</p>
             </div>
@@ -90,18 +90,20 @@
 
         <div class="main-grid">
             <div class="card">
-                <small style="color:#888; font-weight:800;">TEMPERATURE</small>
-                <div class="gauge" id="tempGauge"><span class="gauge-text"><span id="tempVal">--</span>°C</span></div>
+                <small style="color:#a0aec0; font-weight:800; letter-spacing:1px;">INTERNAL TEMP</small>
+                <div class="gauge" id="tempGauge">
+                    <span class="gauge-text"><span id="tempVal">--</span>°C</span>
+                </div>
             </div>
 
             <div class="card">
-                <small style="color:#888; font-weight:800;">ENVIRONMENT</small>
-                <h3 style="margin:20px 0; font-size: 2rem;"><i class="fas fa-tint" style="color:#4299e1"></i> <span id="humVal">--</span>%</h3>
-                <div id="motStatus" style="background:#eee; color:#666;">SCANNING...</div>
+                <small style="color:#a0aec0; font-weight:800; letter-spacing:1px;">ENVIRONMENT</small>
+                <h3 style="margin:25px 0; font-size: 2.2rem; color:#2d3748;"><i class="fas fa-tint" style="color:#4299e1"></i> <span id="humVal">--</span>%</h3>
+                <div id="motStatus" style="background:#edf2f7; color:#718096;">SCANNING MOTION...</div>
             </div>
 
             <div class="card">
-                <small style="color:#888; font-weight:800;">RELAYS</small>
+                <small style="color:#a0aec0; font-weight:800; letter-spacing:1px;">QUICK CONTROLS</small>
                 <div class="control-grid">
                     <button class="btn-device btn-off" id="btn1"><i class="fas fa-lightbulb"></i>Light</button>
                     <button class="btn-device btn-off" id="btn2"><i class="fas fa-fan"></i>Fan</button>
@@ -109,16 +111,11 @@
                     <button class="btn-device btn-off" id="btn4"><i class="fas fa-plug"></i>Fridge</button>
                 </div>
             </div>
-
-            <div class="card chart-card">
-                <small style="color:#888; font-weight:800;">TEMPERATURE TREND (LIVE)</small>
-                <canvas id="tempChart"></canvas>
-            </div>
         </div>
 
         <div class="footer-btns">
             <button id="allOff"><i class="fas fa-power-off"></i> EMERGENCY SHUTDOWN</button>
-            <button id="logoutBtn">Logout</button>
+            <button id="logoutBtn">Logout System</button>
         </div>
     </div>
 
@@ -137,56 +134,55 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        // --- Chart Initialization ---
-        const ctx = document.getElementById('tempChart').getContext('2d');
-        const tempChart = new Chart(ctx, {
-            type: 'line',
-            data: { labels: [], datasets: [{ label: 'Temp °C', data: [], borderColor: '#007bff', tension: 0.4, fill: true, backgroundColor: 'rgba(0,123,255,0.1)' }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false } } }
-        });
-
-        // --- Clock & BG ---
+        // 1. Clock & Daily Background
         setInterval(() => {
             const now = new Date();
-            document.getElementById('liveTime').innerText = now.toLocaleTimeString();
+            document.getElementById('liveTime').innerText = now.toLocaleTimeString([], { hour12: true });
             document.getElementById('liveDate').innerText = now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'short'});
         }, 1000);
 
-        document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://picsum.photos/seed/${new Date().getDate()}/1920/1080')`;
+        function updateDailyBg() {
+            const seed = new Date().toDateString();
+            document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://picsum.photos/seed/${btoa(seed)}/1920/1080')`;
+        }
+        updateDailyBg();
 
-        // --- Login ---
+        // 2. Login Logic
         document.getElementById("loginBtn").onclick = () => {
             const email = document.getElementById("email").value;
             const pass = document.getElementById("password").value;
-            auth.signInWithEmailAndPassword(email, pass).then(() => {
-                document.getElementById("loginOverlay").style.display = "none";
-                document.getElementById("dashboardContent").style.display = "flex";
-                startSync();
-            }).catch(err => {
-                const e = document.getElementById("loginError");
-                e.innerText = err.message; e.style.display = "block";
-            });
+            
+            auth.signInWithEmailAndPassword(email, pass)
+                .then(() => {
+                    document.getElementById("loginOverlay").style.display = "none";
+                    document.getElementById("dashboardContent").style.display = "flex";
+                    startLiveSync();
+                })
+                .catch(err => {
+                    const errBox = document.getElementById("loginError");
+                    errBox.innerText = "Login Failed: " + err.message;
+                    errBox.style.display = "block";
+                });
         };
 
-        // --- Live Sync ---
-        function startSync() {
+        // 3. Live Sync Function
+        function startLiveSync() {
+            // Temperature
             db.ref("temperature").on("value", snap => {
                 const val = snap.val();
                 if (val !== null) {
-                    document.getElementById("tempVal").innerText = val;
+                    document.getElementById("tempVal").innerText = parseFloat(val).toFixed(1);
                     document.getElementById("tempGauge").style.background = `conic-gradient(var(--primary) ${(val/50)*360}deg, #e2e8f0 0deg)`;
-                    
-                    // Update Chart
-                    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    if (tempChart.data.labels.length > 10) { tempChart.data.labels.shift(); tempChart.data.datasets[0].data.shift(); }
-                    tempChart.data.labels.push(now);
-                    tempChart.data.datasets[0].data.push(val);
-                    tempChart.update();
                 }
             });
 
-            db.ref("humidity").on("value", snap => { if(snap.val() !== null) document.getElementById("humVal").innerText = snap.val(); });
+            // Humidity
+            db.ref("humidity").on("value", snap => {
+                const val = snap.val();
+                if (val !== null) document.getElementById("humVal").innerText = parseFloat(val).toFixed(1);
+            });
 
+            // Motion
             db.ref("motionStatus").on("value", snap => {
                 const active = snap.val();
                 const box = document.getElementById("motStatus");
@@ -195,16 +191,25 @@
                 box.style.color = active ? "#c53030" : "#2f855a";
             });
 
+            // Relays (Fixes non-clicking buttons)
             [1, 2, 3, 4].forEach(i => {
-                db.ref("relay" + i).on("value", snap => {
-                    document.getElementById("btn" + i).className = snap.val() ? "btn-device btn-on" : "btn-device btn-off";
+                const relayRef = db.ref("relay" + i);
+                relayRef.on("value", snap => {
+                    const state = snap.val();
+                    document.getElementById("btn" + i).className = state ? "btn-device btn-on" : "btn-device btn-off";
                 });
-                document.getElementById("btn" + i).onclick = () => db.ref("relay" + i).transaction(c => !c);
+                document.getElementById("btn" + i).onclick = () => relayRef.transaction(c => !c);
             });
         }
 
-        document.getElementById("allOff").onclick = () => db.ref().update({ relay1: false, relay2: false, relay3: false, relay4: false });
-        document.getElementById("logoutBtn").onclick = () => { auth.signOut().then(() => location.reload()); };
+        // Global Actions
+        document.getElementById("allOff").onclick = () => {
+            db.ref().update({ relay1: false, relay2: false, relay3: false, relay4: false });
+        };
+
+        document.getElementById("logoutBtn").onclick = () => {
+            auth.signOut().then(() => location.reload());
+        };
     </script>
 </body>
 </html>
